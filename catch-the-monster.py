@@ -7,6 +7,13 @@ KEY_DOWN = 274
 KEY_LEFT = 276
 KEY_RIGHT = 275
 
+class Characters(object):
+    def __init__(self, hero_x, hero_y, screen, images):
+        self.hero_x = hero_x
+        self.hero_y = hero_y
+        self.characterPos = randint(36, 200)
+        self.characterPos = randint(36, 200)
+
 class Hero(object):
     def __init__(self, hero_x, hero_y, screen, hero_image):
         self.hero_x = hero_x
@@ -91,7 +98,7 @@ def main():
     # game loop
     stop_game = False
     while not stop_game:
-        catch = math.sqrt((myHero.hero_x - myMonster.monster_x)**2 + (myHero.hero_y - myMonster.monster_y)**2)
+        catch = math.sqrt((myHero.hero_x - myMonster.characterPos)**2 + (myHero.hero_y - myMonster.monster_y)**2)
         # look through user events fired
         if catch >= 25:
             for event in pygame.event.get():
@@ -146,7 +153,7 @@ def main():
                         screen.blit(background_image, (0, 0))
                         myHero.hero_x = 255
                         myHero.hero_y = 240
-                        myMonster.monster_x = 240
+                        myMonster.characterPos = 240
                         myMonster.monster_y = 100
                         myMonster.update(width, height)
                         myHero.update(width, height)
