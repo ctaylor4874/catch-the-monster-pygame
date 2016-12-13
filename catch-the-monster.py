@@ -147,9 +147,30 @@ def main():
         if won == True:
             level+=1
             return level
+    def scoreChange(level):
+        f2 = open('highscore.txt', 'r')
+        v = f2.read()
+        f2.close()
+        v = v.split(' ')
+        oldScore = int(v[0])
+        if level > oldScore:
+            f = open('highscore.txt', 'r')
+            lines = f.readlines()
+            f.close()
+            f = open("highscore.txt", "w")
+            lines = str(level)
+            f.write(lines)
+            f.close()
+            oldScore = level
+
     loopSong = pygame.mixer.Sound('sounds/music.wav')
     # game loop
     while not stop_game:
+        f2 = open('highscore.txt', 'r')
+        v = f2.read()
+        f2.close()
+        v = v.split(' ')
+        oldScore = int(v[0])
         #start game song
         loopSong.play()
         #detect if hero collides with monster
@@ -185,6 +206,9 @@ def main():
             lvl = pygame.font.SysFont("Comic Sans MS", 30)
             textsurfaceLevel = lvl.render("Level: %d" % (level), True, (255, 255, 255))
             screen.blit(textsurfaceLevel,(0,0))
+            high = pygame.font.SysFont("Comic Sans MS", 30)
+            textsurfaceLevel = high.render("Highscore: %d" % (oldScore), True, (255, 255, 255))
+            screen.blit(textsurfaceLevel,(0,20))
             change_dir_countdown, direction = myMonster.updateMonster(change_dir_countdown, direction)
             myHero.updateHero()
             #update goblins from list myGoblins
@@ -216,18 +240,23 @@ def main():
             lvl = pygame.font.SysFont("Comic Sans MS", 30)
             textsurface = lvl.render("Level: %d" % (level), False, (255, 255, 255))
             screen.blit(textsurface,(0,0))
+            high = pygame.font.SysFont("Comic Sans MS", 30)
+            textsurfaceLevel = high.render("Highscore: %d" % (oldScore), True, (255, 255, 255))
+            screen.blit(textsurfaceLevel,(0,20))
             #play losing mosing
             sound.play()
             #listen for if enter is selected to play again
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        sound.stop()
+                        scoreChange(level)
                         screen.blit(background_image, (0, 0))
+                        sound.stop()
                         myHero.hero_x = 255
                         myHero.hero_y = 240
                         myMonster.monster_x = randint(40, 440)
                         myMonster.monster_y = randint(40, 440)
+                        # f = f.replace('oldScore', '%d') % level
                         #make sure monster doesn't spawn on hero
                         myMonster.buffMonst(myMonster.monster_x, myMonster.monster_y)
                         myMonster.updateMonster(change_dir_countdown, direction)
@@ -243,6 +272,7 @@ def main():
                         myHero.updateHero()
                         lost = False
                     elif event.key == pygame.K_q:
+                        scoreChange(level)
                         stop_game = True
         #if hero catches monster before goblin catches him
         if catch < 25 and lost != True:
@@ -265,6 +295,9 @@ def main():
             lvl = pygame.font.SysFont("Comic Sans MS", 30)
             textsurface = lvl.render("Level: %d" % (level), False, (255, 255, 255))
             screen.blit(textsurface,(0,0))
+            high = pygame.font.SysFont("Comic Sans MS", 30)
+            textsurfaceLevel = high.render("Highscore: %d" % (oldScore), True, (255, 255, 255))
+            screen.blit(textsurfaceLevel,(0,20))
             #play victory music
             sound.play()
             for event in pygame.event.get():
@@ -276,6 +309,7 @@ def main():
                         screen.blit(background_image, (0, 0))
                         #increase level
                         level = won_game(won, level)
+                        scoreChange(level)
                         #set won to false
                         won = False
                         myHero.hero_x = 255
@@ -297,6 +331,7 @@ def main():
                             buffMonst = math.sqrt((myHero.hero_x - myMonster.monster_x)**2 + (myHero.hero_y - myMonster.monster_y)**2)
                         myHero.updateHero()
                     elif event.key == pygame.K_q:
+                        scoreChange(level)
                         stop_game = True
 
         # update the canvas display with the currently drawn frame
