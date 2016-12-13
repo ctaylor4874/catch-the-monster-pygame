@@ -8,41 +8,45 @@ KEY_LEFT = 276
 KEY_RIGHT = 275
 
 class Characters(object):
-    def __init__(self, hero_x, hero_y, screen, images):
-        self.hero_x = hero_x
-        self.hero_y = hero_y
-        self.characterPos = randint(36, 200)
-        self.characterPos = randint(36, 200)
-
-class Hero(object):
-    def __init__(self, hero_x, hero_y, screen, hero_image):
-        self.hero_x = hero_x
-        self.hero_y = hero_y
+    def __init__(self, charImage, positionX, positionY, screen, width, height):
+        self.width = width
+        self.height = height
+        self.charImage = charImage
+        self.hero_x = positionX
+        self.hero_y = positionY
+        self.monster_x = randint(31, 150)
+        self.monster_y = randint(31, 440)
         self.screen = screen
-        self.hero_image = hero_image
+        self.goblin_x = randint(31, 150)
+        self.goblin_y = randint(31, 440)
+        self.goblin_direction = randint(0,3)
 
-    def update(self, width, height):
-        self.screen.blit(self.hero_image, (self.hero_x, self.hero_y))
+    def updateGoblin(self, change_dir_countdown):
+        if change_dir_countdown == 0:
+            self.goblin_direction = randint(0,3)
+        if self.goblin_direction == 0:
+            self.goblin_y-=.5
+        if self.goblin_direction == 1:
+            self.goblin_x+=.5
+        if self.goblin_direction == 2:
+            self.goblin_y+=.5
+        if self.goblin_direction == 3:
+            self.goblin_x-=.5
 
-        if self.hero_x > width - 30:
-            self.hero_x = width - 30
-        if self.hero_x < 0:
-            self.hero_x = 0
-        if self.hero_y > height - 35:
-            self.hero_y = height - 35
-        if self.hero_y < 0:
-            self.hero_y = 0
+        self.screen.blit(self.charImage, (self.goblin_x, self.goblin_y))
 
-class Monster(object):
-    def __init__(self, monster_x, monster_y, screen, monster_image, direction):
-        self.monster_x = monster_x
-        self.monster_y = monster_y
-        self.screen = screen
-        self.monster_image = monster_image
-        self.change_dir_countdown = 0
+        if self.goblin_x > self.width - 30:
+            self.goblin_x = 30
+        if self.goblin_x < 0:
+            self.goblin_x = self.width -30
+        if self.goblin_y > self.height - 30:
+            self.goblin_y = 30
+        if self.goblin_y < 0:
+            self.goblin_y = self.height - 30
+
+    def updateMonster(self, change_dir_countdown, direction):
+        self.change_dir_countdown = change_dir_countdown
         self.direction = direction
-
-    def update(self, width, height):
         if self.change_dir_countdown == 0:
             self.change_dir_countdown = 120
             self.direction = randint(0,3)
@@ -56,18 +60,31 @@ class Monster(object):
         if self.direction == 3:
             self.monster_x-=1
 
-        self.screen.blit(self.monster_image, (self.monster_x, self.monster_y))
+        self.screen.blit(self.charImage, (self.monster_x, self.monster_y))
 
-        if self.monster_x > width - 30:
+        if self.monster_x > self.width - 30:
             self.monster_x = 30
         if self.monster_x < 0:
-            self.monster_x = width -30
-        if self.monster_y > height - 30:
+            self.monster_x = self.width -30
+        if self.monster_y > self.height - 30:
             self.monster_y = 30
         if self.monster_y < 0:
-            self.monster_y = height - 30
+            self.monster_y = self.height - 30
 
         self.change_dir_countdown-=1
+        return self.change_dir_countdown, self.direction
+
+    def updateHero(self):
+        self.screen.blit(self.charImage, (self.hero_x, self.hero_y))
+
+        if self.hero_x > self.width - 30:
+            self.hero_x = self.width - 30
+        if self.hero_x < 0:
+            self.hero_x = 0
+        if self.hero_y > self.height - 35:
+            self.hero_y = self.height - 35
+        if self.hero_y < 0:
+            self.hero_y = 0
 
 def main():
     # declare the size of the canvas
@@ -83,6 +100,7 @@ def main():
     background_image = pygame.image.load('images/background.png').convert_alpha()
     hero_image = pygame.image.load('images/hero.png').convert_alpha()
     monster_image = pygame.image.load('images/monster.png').convert_alpha()
+    goblin_image = pygame.image.load('images/goblin.png').convert_alpha()
 
     # set window caption
     pygame.display.set_caption('Catch The Monster')
@@ -93,12 +111,28 @@ def main():
     ################################
     # PUT INITIALIZATION CODE HERE #
     ################################
-    myHero = Hero(255, 240, screen, hero_image)
-    myMonster = Monster(240, 100, screen, monster_image, 0)
+    change_dir_countdown = 0
+    change_dir_countdown_goblin = 0
+    direction = 0
+    goblin_direction = 0
+    lost = False
+    level = 1
+
+    myGoblins = [
+        Characters(goblin_image, 240, 100, screen, width, height),
+        Characters(goblin_image, 240, 100, screen, width, height),
+        Characters(goblin_image, 240, 100, screen, width, height),
+        Characters(goblin_image, 240, 100, screen, width, height),
+        Characters(goblin_image, 240, 100, screen, width, height),
+        Characters(goblin_image, 240, 100, screen, width, height)
+        ]
+    # myGoblin = Characters(goblin_image, 240, 100, screen, width, height)
+    myHero = Characters(hero_image, 255, 140, screen, width, height)
+    myMonster = Characters(monster_image, 240, 100, screen, width, height)
     # game loop
     stop_game = False
     while not stop_game:
-        catch = math.sqrt((myHero.hero_x - myMonster.characterPos)**2 + (myHero.hero_y - myMonster.monster_y)**2)
+        catch = math.sqrt((myHero.hero_x - myMonster.monster_x)**2 + (myHero.hero_y - myMonster.monster_y)**2)
         # look through user events fired
         if catch >= 25:
             for event in pygame.event.get():
@@ -123,17 +157,58 @@ def main():
         # PUT LOGIC TO UPDATE GAME STATE HERE #
         #######################################
 
-        if catch > 25:
+        if catch >= 25:
+
             screen.blit(background_image, (0, 0))
 
-            myMonster.update(width, height)
-            myHero.update(width, height)
+            change_dir_countdown, direction = myMonster.updateMonster(change_dir_countdown, direction)
+            myHero.updateHero()
+            for n in range(len(myGoblins)):
+                myGoblins[n].updateGoblin(change_dir_countdown)
 
 
         ################################
         # PUT CUSTOM DISPLAY CODE HERE #
         ################################
-        if catch <= 25:
+        lvl = pygame.font.SysFont("Comic Sans MS", 30)
+        textsurface = lvl.render("Level: %d" % (level), False, (255, 255, 255))
+        screen.blit(textsurface,(0,0))
+
+        for i in range(len(myGoblins)):
+            lose = math.sqrt((myHero.hero_x - myGoblins[i].goblin_x)**2 + (myHero.hero_y - myGoblins[i].goblin_y)**2)
+            if lose < 25:
+                lost = True
+        if lost == True:
+            sound = pygame.mixer.Sound('sounds/lose.wav')
+            screen.blit(background_image, (0, 0))
+            for i in range(len(myGoblins)):
+                myGoblins[i].screen.blit(myGoblins[i].charImage, (myGoblins[i].goblin_x, myGoblins[i].goblin_y))
+            lossText = pygame.font.SysFont("Comic Sans MS", 30)
+            textsurface = lossText.render('You lose! Would you like to play again?', False, (97, 159, 182))
+            screen.blit(textsurface,(60,240))
+
+            mySecond = pygame.font.SysFont("Comic Sans MS", 30)
+            textsurface2 = mySecond.render('Press Enter for yes, or Q to exit the game.', False, (97, 159, 182))
+            screen.blit(textsurface2,(60,260))
+
+            sound.play()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        screen.blit(background_image, (0, 0))
+                        myHero.hero_x = 255
+                        myHero.hero_y = 240
+                        myMonster.monster_x = 240
+                        myMonster.monster_y = 100
+                        myMonster.updateMonster(change_dir_countdown, direction)
+                        for goblin in myGoblins:
+                            goblin.updateGoblin(change_dir_countdown)
+                        myHero.updateHero()
+                        lost = False
+                    elif event.key == pygame.K_q:
+                        stop_game = True
+        if catch < 25 and lost != True:
+            sound = pygame.mixer.Sound('sounds/win.wav')
             screen.blit(background_image, (0, 0))
             myFirst = pygame.font.SysFont("Comic Sans MS", 30)
             textsurface = myFirst.render('You win! Would you like to play again?', False, (97, 159, 182))
@@ -142,21 +217,25 @@ def main():
             mySecond = pygame.font.SysFont("Comic Sans MS", 30)
             textsurface2 = mySecond.render('Press Enter for yes, or Q to exit the game.', False, (97, 159, 182))
             screen.blit(textsurface2,(60,260))
-
-            myHero.screen.blit(myHero.hero_image, (myHero.hero_x, myHero.hero_y))
-            sound = pygame.mixer.Sound('win.wav')
+            lvl = pygame.font.SysFont("Comic Sans MS", 30)
+            textsurface = lvl.render("Level: %d" % (level), False, (255, 255, 255))
+            screen.blit(textsurface,(0,0))
+            myHero.screen.blit(myHero.charImage, (myHero.hero_x, myHero.hero_y))
             sound.play()
-
+            level=+1
+            print level
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         screen.blit(background_image, (0, 0))
                         myHero.hero_x = 255
                         myHero.hero_y = 240
-                        myMonster.characterPos = 240
+                        myMonster.monster_x = 240
                         myMonster.monster_y = 100
-                        myMonster.update(width, height)
-                        myHero.update(width, height)
+                        myMonster.updateMonster(change_dir_countdown, direction)
+                        for goblin in myGoblins:
+                            goblin.updateGoblin(change_dir_countdown)
+                        myHero.updateHero()
                     elif event.key == pygame.K_q:
                         stop_game = True
 
