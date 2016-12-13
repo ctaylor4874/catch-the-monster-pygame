@@ -14,12 +14,21 @@ class Characters(object):
         self.charImage = charImage
         self.hero_x = positionX
         self.hero_y = positionY
-        self.monster_x = randint(31, 150)
-        self.monster_y = randint(31, 440)
+        self.monster_x = randint(50, 440)
+        self.monster_y = randint(50, 440)
         self.screen = screen
-        self.goblin_x = randint(31, 150)
-        self.goblin_y = randint(31, 440)
+        self.goblin_x = randint(50, 440)
+        self.goblin_y = randint(50, 440)
         self.goblin_direction = randint(0,3)
+
+    def buffCheck(self, goblin_x, goblin_y):
+        hero_x = 255
+        hero_y = 240
+        buffGob = math.sqrt((hero_x - self.goblin_x)**2 + (hero_y - self.goblin_y)**2)
+        while buffGob < 100:
+            self.goblin_x = randint(50, 440)
+            self.goblin_y = randint(50, 440)
+            buffGob = math.sqrt((hero_x - self.goblin_x)**2 + (hero_y - self.goblin_y)**2)
 
     def updateGoblin(self, change_dir_countdown):
         if change_dir_countdown == 0:
@@ -118,20 +127,21 @@ def main():
     lost = False
     level = 1
 
+    myHero = Characters(hero_image, 255, 140, screen, width, height)
     myGoblins = [
-        Characters(goblin_image, 240, 100, screen, width, height),
-        Characters(goblin_image, 240, 100, screen, width, height),
-        Characters(goblin_image, 240, 100, screen, width, height),
-        Characters(goblin_image, 240, 100, screen, width, height),
-        Characters(goblin_image, 240, 100, screen, width, height),
         Characters(goblin_image, 240, 100, screen, width, height)
         ]
     # myGoblin = Characters(goblin_image, 240, 100, screen, width, height)
-    myHero = Characters(hero_image, 255, 140, screen, width, height)
     myMonster = Characters(monster_image, 240, 100, screen, width, height)
     # game loop
     stop_game = False
+    def won_game(won, level):
+        if won == True:
+            level+=1
+            return level
+    loopSong = pygame.mixer.Sound('sounds/music.wav')
     while not stop_game:
+        loopSong.play()
         catch = math.sqrt((myHero.hero_x - myMonster.monster_x)**2 + (myHero.hero_y - myMonster.monster_y)**2)
         # look through user events fired
         if catch >= 25:
@@ -160,7 +170,9 @@ def main():
         if catch >= 25:
 
             screen.blit(background_image, (0, 0))
-
+            lvl = pygame.font.SysFont("Comic Sans MS", 30)
+            textsurfaceLevel = lvl.render("Level: %d" % (level), True, (255, 255, 255))
+            screen.blit(textsurfaceLevel,(0,0))
             change_dir_countdown, direction = myMonster.updateMonster(change_dir_countdown, direction)
             myHero.updateHero()
             for n in range(len(myGoblins)):
@@ -170,15 +182,13 @@ def main():
         ################################
         # PUT CUSTOM DISPLAY CODE HERE #
         ################################
-        lvl = pygame.font.SysFont("Comic Sans MS", 30)
-        textsurface = lvl.render("Level: %d" % (level), False, (255, 255, 255))
-        screen.blit(textsurface,(0,0))
 
         for i in range(len(myGoblins)):
             lose = math.sqrt((myHero.hero_x - myGoblins[i].goblin_x)**2 + (myHero.hero_y - myGoblins[i].goblin_y)**2)
             if lose < 25:
                 lost = True
         if lost == True:
+            loopSong.stop()
             sound = pygame.mixer.Sound('sounds/lose.wav')
             screen.blit(background_image, (0, 0))
             for i in range(len(myGoblins)):
@@ -188,6 +198,7 @@ def main():
             screen.blit(textsurface,(60,240))
 
             mySecond = pygame.font.SysFont("Comic Sans MS", 30)
+
             textsurface2 = mySecond.render('Press Enter for yes, or Q to exit the game.', False, (97, 159, 182))
             screen.blit(textsurface2,(60,260))
 
@@ -201,13 +212,20 @@ def main():
                         myMonster.monster_x = 240
                         myMonster.monster_y = 100
                         myMonster.updateMonster(change_dir_countdown, direction)
+                        myGoblins = [
+                            Characters(goblin_image, 240, 100, screen, width, height)
+                            ]
                         for goblin in myGoblins:
                             goblin.updateGoblin(change_dir_countdown)
+                            goblin.buffCheck(goblin.goblin_x, goblin.goblin_y)
                         myHero.updateHero()
                         lost = False
                     elif event.key == pygame.K_q:
                         stop_game = True
         if catch < 25 and lost != True:
+            loopSong.stop()
+            won = True
+            catch = 25
             sound = pygame.mixer.Sound('sounds/win.wav')
             screen.blit(background_image, (0, 0))
             myFirst = pygame.font.SysFont("Comic Sans MS", 30)
@@ -217,24 +235,32 @@ def main():
             mySecond = pygame.font.SysFont("Comic Sans MS", 30)
             textsurface2 = mySecond.render('Press Enter for yes, or Q to exit the game.', False, (97, 159, 182))
             screen.blit(textsurface2,(60,260))
+            myHero.screen.blit(myHero.charImage, (myHero.hero_x,
+            myHero.hero_y))
             lvl = pygame.font.SysFont("Comic Sans MS", 30)
             textsurface = lvl.render("Level: %d" % (level), False, (255, 255, 255))
             screen.blit(textsurface,(0,0))
-            myHero.screen.blit(myHero.charImage, (myHero.hero_x, myHero.hero_y))
             sound.play()
-            level=+1
-            print level
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
+                        myGoblins.append(Characters(goblin_image, 240, 100, screen, width, height))
                         screen.blit(background_image, (0, 0))
+                        level = won_game(won, level)
+                        won = False
                         myHero.hero_x = 255
                         myHero.hero_y = 240
-                        myMonster.monster_x = 240
-                        myMonster.monster_y = 100
+                        myMonster.monster_x = randint(40, 440)
+                        myMonster.monster_y = randint(40, 440)
                         myMonster.updateMonster(change_dir_countdown, direction)
                         for goblin in myGoblins:
                             goblin.updateGoblin(change_dir_countdown)
+                            goblin.buffCheck(goblin.goblin_x, goblin.goblin_y)
+                        buffMonst = math.sqrt((myHero.hero_x - myMonster.monster_x)**2 + (myHero.hero_y - myMonster.monster_y)**2)
+                        while buffMonst < 70:
+                            myMonster.monster_x = randint(40, 440)
+                            myMonster.monster_y = randint(40, 440)
+                            buffMonst = math.sqrt((myHero.hero_x - myMonster.monster_x)**2 + (myHero.hero_y - myMonster.monster_y)**2)
                         myHero.updateHero()
                     elif event.key == pygame.K_q:
                         stop_game = True
